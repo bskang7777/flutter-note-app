@@ -12,11 +12,6 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   shared_preferences: ^2.2.2
-  # Firebase 의존성을 임시로 주석 처리 (웹 호환성 문제)
-  # firebase_core: ^2.24.2
-  # firebase_auth: ^4.15.3
-  # google_sign_in: ^6.1.6
-  # cloud_firestore: ^4.13.6
 
 dev_dependencies:
   flutter_test:

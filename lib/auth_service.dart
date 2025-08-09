@@ -62,7 +62,7 @@ class AuthService {
         _currentUser = MockUser.fromJson(jsonDecode(userJson));
         _authStateController.add(_currentUser);
       } catch (e) {
-        print('사용자 정보 로드 오류: $e');
+        // 사용자 정보 로드 오류 발생 (무시)
       }
     }
   }
@@ -90,7 +90,7 @@ class AuthService {
 
       return true;
     } catch (e) {
-      print('Mock 로그인 오류: $e');
+      // Mock 로그인 오류 발생
       return false;
     }
   }

@@ -72,7 +72,6 @@ The app follows a simple Flutter architecture pattern with:
 lib/
 ├── main.dart              # App entry point, routing, and note management UI
 ├── auth_service.dart      # Authentication service with mock implementation
-├── firebase_options.dart  # Firebase configuration (demo keys only)
 ├── models/               # (Currently empty)
 └── services/             # (Currently empty)
 ```
@@ -83,12 +82,13 @@ lib/
 3. Notes are managed locally via SharedPreferences with JSON serialization
 4. All note operations require authentication (enforced in UI)
 
-## Firebase Configuration
+## Authentication System
 
-The project includes Firebase configuration but currently uses mock authentication:
-- `firebase_options.dart` contains demo/placeholder Firebase configuration
-- To enable real Firebase: Replace demo keys with actual Firebase project credentials
-- Authentication methods: Google Sign-In is configured but mocked
+The project uses mock authentication for simplicity and ease of development:
+- Mock Google Sign-In with 2-second loading simulation
+- No external API keys or Firebase configuration required
+- User data persisted locally using SharedPreferences
+- Authentication state maintained across app restarts
 
 ## Development Guidelines
 

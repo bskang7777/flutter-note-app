@@ -8,7 +8,7 @@
 2. 우측 상단의 `+` 버튼 클릭 → `New repository` 선택
 3. 저장소 정보 입력:
    - **Repository name**: `flutter-note-app`
-   - **Description**: `Flutter 메모 앱 with Google 로그인`
+   - **Description**: `Flutter 메모 앱 with Mock 로그인`
    - **Public** 또는 **Private** 선택
    - ⚠️ **Initialize this repository with README** 체크 해제 (이미 로컬에 있음)
 4. `Create repository` 클릭
