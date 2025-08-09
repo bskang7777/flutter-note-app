@@ -1,17 +1,13 @@
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth_service.dart';
-import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Mock 인증 서비스 초기화
+  await AuthService().initialize();
   
   runApp(const MyApp());
 }
@@ -40,7 +36,7 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  User? _previousUser;
+  MockUser? _previousUser;
   bool _isInitialized = false;
 
   @override
@@ -75,7 +71,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       );
     }
 
-    return StreamBuilder<User?>(
+    return StreamBuilder<MockUser?>(
       stream: AuthService().authStateChanges,
       initialData: AuthService().currentUser, // 초기 데이터 제공
       builder: (context, snapshot) {
@@ -282,7 +278,7 @@ class _NoteListPageState extends State<NoteListPage> {
   final TextEditingController _textController = TextEditingController();
   List<Note> _notes = [];
   bool _isLoggedIn = false;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 
   @override
   void initState() {
@@ -292,36 +288,8 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   Future<void> _loadNotes() async {
-    final user = AuthService().currentUser;
-    if (user != null) {
-      // Firestore에서 사용자별 메모 로드
-      try {
-        final snapshot = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('notes')
-            .orderBy('createdAt', descending: true)
-            .get();
-        
-        setState(() {
-          _notes = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return Note(
-              id: doc.id,
-              content: data['content'] ?? '',
-              createdAt: (data['createdAt'] as Timestamp).toDate(),
-            );
-          }).toList();
-        });
-      } catch (e) {
-        print('Firestore 메모 로드 오류: $e');
-        // 오류 발생 시 로컬 저장소에서 로드
-        await _loadNotesFromLocal();
-      }
-    } else {
-      // 로그인하지 않은 경우 로컬 저장소에서 로드
-      await _loadNotesFromLocal();
-    }
+    // Mock 인증을 사용하므로 항상 로컬 저장소에서 로드
+    await _loadNotesFromLocal();
   }
 
   Future<void> _loadNotesFromLocal() async {
@@ -353,94 +321,46 @@ class _NoteListPageState extends State<NoteListPage> {
     }
 
     if (_textController.text.isNotEmpty) {
-      final user = AuthService().currentUser;
-      if (user != null) {
-        try {
-          // Firestore에 메모 추가
-          final docRef = await _firestore
-              .collection('users')
-              .doc(user.uid)
-              .collection('notes')
-              .add({
-            'content': _textController.text,
-            'createdAt': Timestamp.now(),
-          });
-
-          final newNote = Note(
-            id: docRef.id,
-            content: _textController.text,
-            createdAt: DateTime.now(),
-          );
-          
-          setState(() {
-            _notes.insert(0, newNote);
-          });
-          
-          _textController.clear();
-          
-          if (mounted) {
-            Navigator.of(context).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('메모가 Firestore에 저장되었습니다.'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        } catch (e) {
-          print('Firestore 저장 오류: $e');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('메모 저장 실패: $e'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        }
+      final newNote = Note(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        content: _textController.text,
+        createdAt: DateTime.now(),
+      );
+      
+      setState(() {
+        _notes.insert(0, newNote);
+      });
+      
+      await _saveNotes();
+      _textController.clear();
+      
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('메모가 저장되었습니다.'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     }
   }
 
   void _deleteNote(String id) async {
-    final user = AuthService().currentUser;
-    if (user != null) {
-      try {
-        // Firestore에서 메모 삭제
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('notes')
-            .doc(id)
-            .delete();
-
-        setState(() {
-          _notes.removeWhere((note) => note.id == id);
-        });
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('메모가 Firestore에서 삭제되었습니다.'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      } catch (e) {
-        print('Firestore 삭제 오류: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('메모 삭제 실패: $e'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
+    setState(() {
+      _notes.removeWhere((note) => note.id == id);
+    });
+    await _saveNotes();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('메모가 삭제되었습니다.'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 

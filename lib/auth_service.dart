@@ -1,77 +1,119 @@
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'dart:convert';
 
+// Mock User 클래스
+class MockUser {
+  final String uid;
+  final String? displayName;
+  final String? email;
+  final String? photoURL;
+
+  MockUser({
+    required this.uid,
+    this.displayName,
+    this.email,
+    this.photoURL,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'uid': uid,
+      'displayName': displayName,
+      'email': email,
+      'photoURL': photoURL,
+    };
+  }
+
+  factory MockUser.fromJson(Map<String, dynamic> json) {
+    return MockUser(
+      uid: json['uid'],
+      displayName: json['displayName'],
+      email: json['email'],
+      photoURL: json['photoURL'],
+    );
+  }
+}
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // 웹에서는 meta 태그의 client_id를 사용하므로 생략 가능
-    // 하지만 다른 플랫폼을 위해 설정할 수도 있습니다
-  );
+  MockUser? _currentUser;
+  final StreamController<MockUser?> _authStateController = StreamController<MockUser?>.broadcast();
 
   // 현재 사용자
-  User? get currentUser => _auth.currentUser;
+  MockUser? get currentUser => _currentUser;
   
   // 로그인 상태
   bool get isLoggedIn => currentUser != null;
   
-  // 인증 상태 스트림
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  // 인증 상태 변경 스트림
+  Stream<MockUser?> get authStateChanges => _authStateController.stream;
 
-  // 초기화
+  // 서비스 초기화 (SharedPreferences에서 사용자 정보 로드)
   Future<void> initialize() async {
-    // Firebase Auth는 자동으로 인증 상태를 관리합니다
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('mock_user');
+    if (userJson != null) {
+      try {
+        _currentUser = MockUser.fromJson(jsonDecode(userJson));
+        _authStateController.add(_currentUser);
+      } catch (e) {
+        print('사용자 정보 로드 오류: $e');
+      }
+    }
   }
 
-  // Google 로그인
+  // Google 로그인 시뮬레이션
   Future<bool> signInWithGoogle() async {
     try {
-      // 실제 Google 로그인 시도
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        // 사용자가 로그인을 취소함
-        return false;
-      }
-
-      // Google 인증 정보 가져오기
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // Firebase 인증 자격증명 생성
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      // 로그인 시뮬레이션 (2초 대기)
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // Mock 사용자 생성
+      _currentUser = MockUser(
+        uid: 'mock_user_${DateTime.now().millisecondsSinceEpoch}',
+        displayName: 'Mock User',
+        email: 'mock.user@example.com',
+        photoURL: 'https://via.placeholder.com/150',
       );
-
-      // Firebase에 로그인
-      await _auth.signInWithCredential(credential);
+      
+      // SharedPreferences에 저장
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('mock_user', jsonEncode(_currentUser!.toJson()));
+      
+      // 스트림에 변경사항 알림
+      _authStateController.add(_currentUser);
+      
       return true;
     } catch (e) {
-      print('Google 로그인 오류: $e');
+      print('Mock 로그인 오류: $e');
       return false;
     }
   }
 
   // 로그아웃
   Future<void> signOut() async {
-    try {
-      await _googleSignIn.signOut();
-      await _auth.signOut();
-    } catch (e) {
-      print('로그아웃 오류: $e');
-    }
+    _currentUser = null;
+    
+    // SharedPreferences에서 사용자 정보 제거
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('mock_user');
+    
+    // 스트림에 변경사항 알림
+    _authStateController.add(null);
   }
 
-  // 사용자 정보 가져오기
+  // 사용자 정보 접근자
   String? get userDisplayName => currentUser?.displayName;
   String? get userEmail => currentUser?.email;
   String? get userPhotoURL => currentUser?.photoURL;
   String? get userId => currentUser?.uid;
+
+  // 리소스 정리
+  void dispose() {
+    _authStateController.close();
+  }
 }
