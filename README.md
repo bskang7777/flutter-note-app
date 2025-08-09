@@ -8,13 +8,14 @@
 
 ## 🚀 데모
 
-현재 로컬 개발 환경에서 실행 가능합니다. Firebase 설정 후 온라인 배포가 가능합니다.
+- **GitHub Pages**: [flutter-note-app.pages.dev](https://bskang7777.github.io/flutter-note-app/) (자동 배포)
+- **로컬 실행**: `flutter run -d web-server --web-port=8080`
 
 ## 기능
 
 - ✅ Google 로그인 인증
 - ✅ 메모 추가
-- ✅ 메모 삭제  
+- ✅ 메모 삭제
 - ✅ 메모 목록 보기
 - ✅ 작성 날짜 표시
 - ✅ Firebase Firestore를 통한 클라우드 저장
@@ -24,6 +25,7 @@
 ## 스크린샷
 
 앱은 다음과 같은 기능을 제공합니다:
+
 - 메인 화면에서 모든 메모를 카드 형태로 표시
 - '+' 버튼을 눌러 새 메모 추가
 - 각 메모에는 삭제 버튼이 있어 불필요한 메모 제거 가능
@@ -32,6 +34,7 @@
 ## 설치 및 실행
 
 ### 사전 요구사항
+
 - Flutter SDK (3.0.0 이상)
 - Dart SDK
 - Android Studio 또는 VS Code (Flutter 플러그인 설치)
@@ -43,6 +46,7 @@
 2. Authentication > Sign-in method에서 Google 로그인 활성화
 3. Firestore Database 생성 (테스트 모드로 시작)
 4. 프로젝트 설정에서 각 플랫폼별 설정:
+
    - Web: Web 앱 추가하고 설정 정보 복사
    - Android: Android 앱 추가하고 `google-services.json` 다운로드
    - iOS: iOS 앱 추가하고 `GoogleService-Info.plist` 다운로드
@@ -80,8 +84,9 @@
    ```
 
 ### 지원 플랫폼
+
 - Android
-- iOS  
+- iOS
 - Web
 - Windows
 - macOS
@@ -122,4 +127,4 @@ lib/
 
 ## 라이센스
 
-이 프로젝트는 MIT 라이센스 하에 있습니다. 
+이 프로젝트는 MIT 라이센스 하에 있습니다.
