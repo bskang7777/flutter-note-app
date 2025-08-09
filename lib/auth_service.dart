@@ -41,14 +41,15 @@ class AuthService {
   AuthService._internal();
 
   MockUser? _currentUser;
-  final StreamController<MockUser?> _authStateController = StreamController<MockUser?>.broadcast();
+  final StreamController<MockUser?> _authStateController =
+      StreamController<MockUser?>.broadcast();
 
   // 현재 사용자
   MockUser? get currentUser => _currentUser;
-  
+
   // 로그인 상태
   bool get isLoggedIn => currentUser != null;
-  
+
   // 인증 상태 변경 스트림
   Stream<MockUser?> get authStateChanges => _authStateController.stream;
 
@@ -71,7 +72,7 @@ class AuthService {
     try {
       // 로그인 시뮬레이션 (2초 대기)
       await Future.delayed(const Duration(seconds: 2));
-      
+
       // Mock 사용자 생성
       _currentUser = MockUser(
         uid: 'mock_user_${DateTime.now().millisecondsSinceEpoch}',
@@ -79,14 +80,14 @@ class AuthService {
         email: 'mock.user@example.com',
         photoURL: 'https://via.placeholder.com/150',
       );
-      
+
       // SharedPreferences에 저장
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('mock_user', jsonEncode(_currentUser!.toJson()));
-      
+
       // 스트림에 변경사항 알림
       _authStateController.add(_currentUser);
-      
+
       return true;
     } catch (e) {
       print('Mock 로그인 오류: $e');
@@ -97,11 +98,11 @@ class AuthService {
   // 로그아웃
   Future<void> signOut() async {
     _currentUser = null;
-    
+
     // SharedPreferences에서 사용자 정보 제거
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('mock_user');
-    
+
     // 스트림에 변경사항 알림
     _authStateController.add(null);
   }

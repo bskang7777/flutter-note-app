@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +7,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Mock 인증 서비스 초기화
   await AuthService().initialize();
-  
+
   runApp(const MyApp());
 }
 
@@ -82,7 +81,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('🎉 ${snapshot.data?.displayName ?? '사용자'}님, 로그인되었습니다!'),
+                  content: Text(
+                      '🎉 ${snapshot.data?.displayName ?? '사용자'}님, 로그인되었습니다!'),
                   backgroundColor: Colors.green,
                   duration: const Duration(seconds: 3),
                   behavior: SnackBarBehavior.floating,
@@ -91,12 +91,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
             }
           });
         }
-        
+
         // 로그아웃 시 이전 사용자 정보 초기화
         if (!snapshot.hasData) {
           _previousUser = null;
         }
-        
+
         // 사용자 상태에 따른 화면 표시
         if (snapshot.hasData) {
           return const NoteListPage();
@@ -125,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final result = await AuthService().signInWithGoogle();
-      
+
       if (!result && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -169,43 +169,44 @@ class _LoginPageState extends State<LoginPage> {
                 color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 24),
-              
+
               // 앱 제목
               Text(
                 'Flutter 메모 앱',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
               ),
               const SizedBox(height: 8),
-              
+
               // 부제목
               Text(
                 '안전하게 메모를 저장하고 관리하세요',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                      color: Colors.grey[600],
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
-              
+
               // Google 로그인 버튼
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _signInWithGoogle,
-                  icon: _isLoading 
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Icon(Icons.login, color: Colors.white),
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.login, color: Colors.white),
                   label: Text(
                     _isLoading ? '로그인 중...' : 'Google로 로그인',
                     style: const TextStyle(
@@ -225,13 +226,13 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // 설명 텍스트
               Text(
                 'Google 계정으로 로그인하여\n모든 기기에서 메모를 동기화하세요',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[500],
-                ),
+                      color: Colors.grey[500],
+                    ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -255,16 +256,16 @@ class Note {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'content': content,
-    'createdAt': createdAt.toIso8601String(),
-  };
+        'id': id,
+        'content': content,
+        'createdAt': createdAt.toIso8601String(),
+      };
 
   factory Note.fromJson(Map<String, dynamic> json) => Note(
-    id: json['id'],
-    content: json['content'],
-    createdAt: DateTime.parse(json['createdAt']),
-  );
+        id: json['id'],
+        content: json['content'],
+        createdAt: DateTime.parse(json['createdAt']),
+      );
 }
 
 class NoteListPage extends StatefulWidget {
@@ -278,7 +279,6 @@ class _NoteListPageState extends State<NoteListPage> {
   final TextEditingController _textController = TextEditingController();
   List<Note> _notes = [];
   bool _isLoggedIn = false;
-
 
   @override
   void initState() {
@@ -326,14 +326,14 @@ class _NoteListPageState extends State<NoteListPage> {
         content: _textController.text,
         createdAt: DateTime.now(),
       );
-      
+
       setState(() {
         _notes.insert(0, newNote);
       });
-      
+
       await _saveNotes();
       _textController.clear();
-      
+
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -352,7 +352,7 @@ class _NoteListPageState extends State<NoteListPage> {
       _notes.removeWhere((note) => note.id == id);
     });
     await _saveNotes();
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -374,7 +374,7 @@ class _NoteListPageState extends State<NoteListPage> {
       );
       return;
     }
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -397,9 +397,11 @@ class _NoteListPageState extends State<NoteListPage> {
               child: const Text('취소'),
             ),
             ElevatedButton(
-              onPressed: _isLoggedIn ? () {
-                _addNote();
-              } : null,
+              onPressed: _isLoggedIn
+                  ? () {
+                      _addNote();
+                    }
+                  : null,
               child: const Text('추가'),
             ),
           ],
@@ -411,7 +413,7 @@ class _NoteListPageState extends State<NoteListPage> {
   @override
   Widget build(BuildContext context) {
     final authService = AuthService();
-    
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -466,19 +468,22 @@ class _NoteListPageState extends State<NoteListPage> {
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
                 radius: 16,
-                backgroundImage: authService.userPhotoURL != null 
-                  ? NetworkImage(authService.userPhotoURL!)
-                  : null,
+                backgroundImage: authService.userPhotoURL != null
+                    ? NetworkImage(authService.userPhotoURL!)
+                    : null,
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                child: authService.userPhotoURL == null 
-                  ? Text(
-                      authService.userDisplayName?.substring(0, 1).toUpperCase() ?? 'U',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : null,
+                child: authService.userPhotoURL == null
+                    ? Text(
+                        authService.userDisplayName
+                                ?.substring(0, 1)
+                                .toUpperCase() ??
+                            'U',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
               ),
             ),
           ),
@@ -539,14 +544,16 @@ class _NoteListPageState extends State<NoteListPage> {
               },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _isLoggedIn ? _showAddNoteDialog : () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('메모를 저장하려면 로그인이 필요합니다.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        },
+        onPressed: _isLoggedIn
+            ? _showAddNoteDialog
+            : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('메모를 저장하려면 로그인이 필요합니다.'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              },
         backgroundColor: _isLoggedIn ? null : Colors.grey[400],
         tooltip: _isLoggedIn ? '메모 추가' : '로그인 후 사용 가능',
         child: Icon(
@@ -566,4 +573,4 @@ class _NoteListPageState extends State<NoteListPage> {
     _textController.dispose();
     super.dispose();
   }
-} 
+}
