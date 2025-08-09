@@ -1,0 +1,141 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test Flutter App
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Verify formatting
+      run: dart format --output=none --set-exit-if-changed .
+      
+    - name: Analyze project source
+      run: flutter analyze --fatal-infos
+      
+    - name: Run tests
+      run: flutter test --coverage
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: success()
+      with:
+        file: coverage/lcov.info
+        
+  build-web:
+    needs: test
+    runs-on: ubuntu-latest
+    name: Build Web App
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Enable web support
+      run: flutter config --enable-web
+      
+    - name: Build web app
+      run: flutter build web --release --web-renderer html --base-href /flutter-note-app/
+      
+    - name: Upload web build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: web-build
+        path: build/web/
+        retention-days: 5
+        
+  build-android:
+    needs: test
+    runs-on: ubuntu-latest
+    name: Build Android APK
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Build Android APK
+      run: flutter build apk --release
+      
+    - name: Upload Android APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: android-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 5
+        
+  build-windows:
+    needs: test
+    runs-on: windows-latest
+    name: Build Windows App
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Enable Windows support
+      run: flutter config --enable-windows-desktop
+      
+    - name: Build Windows app
+      run: flutter build windows --release
+      
+    - name: Upload Windows build
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-build
+        path: build/windows/x64/runner/Release/
+        retention-days: 5

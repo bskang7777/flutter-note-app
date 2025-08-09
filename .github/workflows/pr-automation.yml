@@ -1,0 +1,168 @@
+name: PR Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  pr-labeler:
+    runs-on: ubuntu-latest
+    name: Auto Label PR
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Label PR based on files changed
+      uses: actions/labeler@v4
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        configuration-path: .github/labeler.yml
+        
+    - name: Label PR by size
+      uses: codelytv/pr-size-labeler@v1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        xs_label: 'size/XS'
+        xs_max_size: 10
+        s_label: 'size/S'
+        s_max_size: 100
+        m_label: 'size/M'
+        m_max_size: 500
+        l_label: 'size/L'
+        l_max_size: 1000
+        xl_label: 'size/XL'
+        
+  pr-preview:
+    runs-on: ubuntu-latest
+    name: Deploy PR Preview
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Enable web support
+      run: flutter config --enable-web
+      
+    - name: Build web app for preview
+      run: flutter build web --release --web-renderer html --base-href /flutter-note-app/pr-${{ github.event.number }}/
+      
+    - name: Deploy to Netlify
+      uses: nwtgck/actions-netlify@v2.0
+      with:
+        publish-dir: './build/web'
+        production-branch: main
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        deploy-message: "Deploy from PR #${{ github.event.number }}"
+        enable-pull-request-comment: true
+        enable-commit-comment: false
+        overwrites-pull-request-comment: true
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      timeout-minutes: 1
+      
+  pr-checks:
+    runs-on: ubuntu-latest
+    name: PR Quality Checks
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Check PR title
+      uses: amannn/action-semantic-pull-request@v5
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        types: |
+          feat
+          fix
+          docs
+          style
+          refactor
+          perf
+          test
+          chore
+          ci
+        scopes: |
+          ui
+          auth
+          storage
+          workflow
+          deps
+        requireScope: false
+        
+    - name: Check for TODO comments
+      run: |
+        echo "::group::TODO 검사"
+        TODO_COUNT=$(grep -r "TODO\|FIXME\|HACK" lib/ --include="*.dart" | wc -l || echo "0")
+        echo "발견된 TODO/FIXME/HACK: $TODO_COUNT"
+        if [ $TODO_COUNT -gt 10 ]; then
+          echo "::warning::너무 많은 TODO 주석이 발견되었습니다 ($TODO_COUNT). 정리를 고려해주세요."
+        fi
+        echo "::endgroup::"
+        
+    - name: Check commit messages
+      run: |
+        echo "::group::커밋 메시지 검사"
+        git log --oneline ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > commits.txt
+        while read commit; do
+          echo "검사 중: $commit"
+        done < commits.txt
+        echo "::endgroup::"
+        
+    - name: Generate PR summary
+      run: |
+        echo "## 📋 Pull Request 요약" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**제목**: ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+        echo "**작성자**: @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+        echo "**브랜치**: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔍 변경사항 분석" >> $GITHUB_STEP_SUMMARY
+        echo "- 추가된 라인: +${{ github.event.pull_request.additions }}" >> $GITHUB_STEP_SUMMARY
+        echo "- 삭제된 라인: -${{ github.event.pull_request.deletions }}" >> $GITHUB_STEP_SUMMARY
+        echo "- 변경된 파일: ${{ github.event.pull_request.changed_files }}개" >> $GITHUB_STEP_SUMMARY
+        
+  auto-merge:
+    runs-on: ubuntu-latest
+    name: Auto Merge
+    if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+    
+    steps:
+    - name: Auto merge approved PR
+      uses: pascalgn/merge-action@v0.15.6
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        merge_method: squash
+        merge_commit_message: automatic
+        merge_forks: false
+        merge_labels: auto-merge,!work-in-progress,!do-not-merge

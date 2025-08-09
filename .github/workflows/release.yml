@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    name: Create Release
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Generate changelog
+      id: changelog
+      run: |
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "## 🚀 새로운 기능" >> $GITHUB_OUTPUT
+        echo "- Flutter 메모 앱 릴리즈" >> $GITHUB_OUTPUT
+        echo "- Google 로그인 지원" >> $GITHUB_OUTPUT
+        echo "- 멀티플랫폼 지원 (Web, Android, Windows)" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "## 🐛 버그 수정" >> $GITHUB_OUTPUT
+        echo "- 안정성 개선" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "## 📱 지원 플랫폼" >> $GITHUB_OUTPUT
+        echo "- 🌐 Web (GitHub Pages)" >> $GITHUB_OUTPUT
+        echo "- 🤖 Android APK" >> $GITHUB_OUTPUT
+        echo "- 🪟 Windows 데스크톱" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}
+        release_name: Flutter 메모 앱 ${{ github.event.inputs.version || github.ref_name }}
+        body: ${{ steps.changelog.outputs.CHANGELOG }}
+        draft: false
+        prerelease: false
+        
+  build-and-upload:
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: web
+            build-cmd: flutter build web --release --web-renderer html
+            artifact-path: build/web/
+            asset-name: flutter-note-app-web.zip
+            
+          - os: ubuntu-latest
+            platform: android
+            build-cmd: flutter build apk --release
+            artifact-path: build/app/outputs/flutter-apk/app-release.apk
+            asset-name: flutter-note-app-android.apk
+            
+          - os: windows-latest
+            platform: windows
+            build-cmd: flutter build windows --release
+            artifact-path: build/windows/x64/runner/Release/
+            asset-name: flutter-note-app-windows.zip
+    
+    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.platform }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Java (Android only)
+      if: matrix.platform == 'android'
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Enable platform support
+      run: |
+        if [ "${{ matrix.platform }}" = "web" ]; then
+          flutter config --enable-web
+        elif [ "${{ matrix.platform }}" = "windows" ]; then
+          flutter config --enable-windows-desktop
+        fi
+      shell: bash
+      
+    - name: Build app
+      run: ${{ matrix.build-cmd }}
+      
+    - name: Create archive
+      run: |
+        if [ "${{ matrix.platform }}" = "web" ] || [ "${{ matrix.platform }}" = "windows" ]; then
+          cd ${{ matrix.artifact-path }}
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a ../../${{ matrix.asset-name }} *
+          else
+            zip -r ../../${{ matrix.asset-name }} *
+          fi
+          cd ../..
+        fi
+      shell: bash
+      
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ${{ matrix.platform == 'android' && matrix.artifact-path || matrix.asset-name }}
+        asset_name: ${{ matrix.asset-name }}
+        asset_content_type: ${{ matrix.platform == 'android' && 'application/vnd.android.package-archive' || 'application/zip' }}

@@ -1,0 +1,66 @@
+# 라벨 자동 설정 규칙
+
+# UI 관련 변경사항
+ui:
+  - lib/**/*.dart
+  - web/**/*
+  - '**/*.css'
+  - '**/*.html'
+
+# 인증 관련
+auth:
+  - lib/auth_service.dart
+  - '**/auth/**/*'
+  - '**/login/**/*'
+
+# 문서 관련
+documentation:
+  - '*.md'
+  - 'docs/**/*'
+  - '.github/**/*.md'
+
+# 설정 관련
+config:
+  - pubspec.yaml
+  - analysis_options.yaml
+  - '**/*config*'
+
+# 테스트 관련
+tests:
+  - test/**/*
+  - '**/*_test.dart'
+  - '**/*test*'
+
+# CI/CD 관련
+ci:
+  - .github/workflows/**/*
+  - '.github/**/*.yml'
+  - '.github/**/*.yaml'
+
+# 의존성 관련
+dependencies:
+  - pubspec.yaml
+  - pubspec.lock
+
+# 플랫폼별
+web:
+  - web/**/*
+  - '**/*web*'
+
+android:
+  - android/**/*
+  - '**/*android*'
+
+windows:
+  - windows/**/*
+  - '**/*windows*'
+
+# 기능별
+feature:
+  - lib/**/*.dart
+
+bugfix:
+  - any: ['fix', 'Fix', 'FIX']
+
+hotfix:
+  - any: ['hotfix', 'Hotfix', 'HOTFIX']

@@ -1,0 +1,118 @@
+name: 🐛 버그 리포트
+description: 앱에서 발생한 버그를 신고해주세요
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Flutter 메모 앱의 버그를 신고해 주셔서 감사합니다! 
+        가능한 한 자세한 정보를 제공해 주시면 빠르게 해결할 수 있습니다.
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: 🐛 버그 설명
+      description: 발생한 버그에 대해 명확하고 간결하게 설명해주세요.
+      placeholder: 어떤 문제가 발생했나요?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: 🔄 재현 단계
+      description: 버그를 재현하는 단계를 순서대로 작성해주세요.
+      placeholder: |
+        1. '...' 버튼을 클릭
+        2. '...' 항목을 선택
+        3. 오류 발생
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: ✅ 예상 동작
+      description: 어떤 결과를 기대했는지 설명해주세요.
+      placeholder: 정상적으로 작동했다면 어떻게 되어야 했나요?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: ❌ 실제 동작
+      description: 실제로 어떤 일이 발생했는지 설명해주세요.
+      placeholder: 실제로는 어떤 일이 일어났나요?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 🖥️ 플랫폼
+      description: 어느 플랫폼에서 문제가 발생했나요?
+      options:
+        - Web (Chrome)
+        - Web (Firefox)
+        - Web (Safari)
+        - Web (Edge)
+        - Android
+        - Windows Desktop
+        - 기타
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 🚨 심각도
+      description: 이 버그가 앱 사용에 미치는 영향은?
+      options:
+        - Critical (앱이 사용 불가능)
+        - High (주요 기능 사용 불가)
+        - Medium (일부 기능에 문제)
+        - Low (UI 문제나 미미한 오류)
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 📸 스크린샷
+      description: 가능하다면 스크린샷이나 화면 녹화를 첨부해주세요.
+      placeholder: 이미지를 드래그 앤 드롭하거나 붙여넣기 하세요.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 🔧 환경 정보
+      description: 사용 중인 환경에 대한 추가 정보를 제공해주세요.
+      placeholder: |
+        - OS: [예: Windows 11, macOS 14, Android 13]
+        - 브라우저: [예: Chrome 120.0]
+        - 화면 크기: [예: 1920x1080, 모바일]
+        - 기타 관련 정보
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📝 추가 정보
+      description: 버그 해결에 도움이 될 만한 다른 정보가 있다면 작성해주세요.
+      placeholder: 다른 브라우저에서도 테스트해봤나요? 특정 상황에서만 발생하나요?
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: ✅ 확인사항
+      description: 버그 리포트를 제출하기 전에 다음 사항을 확인해주세요.
+      options:
+        - label: 기존 이슈를 검색해봤고, 중복된 리포트가 없음을 확인했습니다.
+          required: true
+        - label: 최신 버전의 앱을 사용하고 있습니다.
+          required: true
+        - label: 재현 단계가 명확하고 다른 사람도 따라할 수 있습니다.
+          required: true
